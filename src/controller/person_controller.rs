@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::Json;
-use axum::response::IntoResponse;
+use axum::{routing::{get, post}, Router, extract::{ State, Path }, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use time::{ Date };
+use time::macros::date;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
@@ -37,7 +35,33 @@ pub struct NewPerson {
 }
 
 impl Person {
-    pub async fn find_person(
+
+    pub fn routes() -> Router {
+        let mut people: HashMap<Uuid, Person> = HashMap::new();
+
+        let person = Person {
+            id: Uuid::now_v7(),
+            name: String::from("Roberto"),
+            nick: String::from("Rob"),
+            birth_date: date!(1986 - 03 - 31),
+            stack: None
+        };
+
+        println!("{}", person.id);
+
+        people.insert(person.id, person);
+
+        let app_state: AppState = Arc::new(RwLock::new(people));
+
+        Router::new()
+            .route("/", get(Self::search_people))
+            .route("/:id", get(Self::find_person))
+            .route("/", post(Self::create_person))
+            .route("/contagem-pessoas", get(Self::count_person))
+            .with_state(app_state)
+    }
+
+    async fn find_person(
         State(people): State<AppState>,
         Path(person_id): Path<Uuid>
     ) -> impl IntoResponse {
@@ -47,11 +71,11 @@ impl Person {
         }
     }
 
-    pub async fn search_people(state: State<AppState>) -> impl IntoResponse {
+    async fn search_people(state: State<AppState>) -> impl IntoResponse {
         (StatusCode::OK, "Busca pessoas");
     }
 
-    pub async fn create_person(
+    async fn create_person(
         State(people): State<AppState>,
         Json(new_person): Json<NewPerson>
     ) -> impl IntoResponse {
@@ -69,7 +93,7 @@ impl Person {
         (StatusCode::OK, Json(person))
     }
 
-    pub async fn count_person(state: State<AppState>) -> impl IntoResponse {
+    async fn count_person(state: State<AppState>) -> impl IntoResponse {
         let count = state.read().await.len();
         (StatusCode::OK, Json(count));
     }
