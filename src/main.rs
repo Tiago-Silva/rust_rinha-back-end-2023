@@ -1,3 +1,6 @@
+mod controller;
+use controller::person_controller::{Person, NewPerson};
+
 use std::{
     collections::HashMap,
     sync::Arc
@@ -9,29 +12,6 @@ use time::{macros::date, Date};
 use tokio::sync::{Mutex, RwLock};
 use uuid::Uuid;
 
-time::serde::format_description!(date_format, Date, "[day]-[month]-[year]");
-#[derive(Clone, Serialize)]
-pub struct Person {
-    pub id: Uuid,
-    #[serde(rename = "nome")]
-    pub name: String,
-    #[serde(rename = "apelido")]
-    pub nick: String,
-    #[serde(rename = "nascimento", with = "date_format")]
-    pub birth_date: Date,
-    pub stack: Option<Vec<String>>
-}
-
-#[derive(Clone, Deserialize)]
-pub struct NewPerson {
-    #[serde(rename = "nome")]
-    pub name: String,
-    #[serde(rename = "apelido")]
-    pub nick: String,
-    #[serde(rename = "nascimento", with = "date_format")]
-    pub birth_date: Date,
-    pub stack: Option<Vec<String>>
-}
 type AppState = Arc<RwLock<HashMap<Uuid, Person>>>;
 
 #[tokio::main]
