@@ -1,15 +1,13 @@
 use sqlx::{Pool, MySql};
 use crate::entity::product::{NewProduct, Product};
-use crate::repository::db_config::connect;
 
 pub struct ProductRepository{
     connection: Pool<MySql>,
 }
 
 impl ProductRepository {
-    pub async fn new() -> Result<Self, sqlx::Error> {
-        let connection = connect().await?;
-        Ok(Self { connection })
+    pub fn new(connection: Pool<MySql>) -> Self {
+        Self { connection }
     }
 
     pub async fn create_product(&self, new_product: NewProduct) -> Result<u64, sqlx::Error> {

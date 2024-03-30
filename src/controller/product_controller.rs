@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use axum::routing::{get, post};
 use crate::entity::product::NewProduct;
 use crate::repository::product_repository::ProductRepository;
-use tokio::runtime::Runtime;
+use crate::repository::repository::Repository;
 
 pub struct ProductController {
     pub repo: ProductRepository,
@@ -30,15 +30,17 @@ impl ProductController {
         (StatusCode::OK, Json("Find all products"))
     }
 
+    // Em product_controller.rs
     async fn create_product(
         Json(new_product): Json<NewProduct>
     ) -> impl IntoResponse {
         println!("{:?}", new_product.name);
 
-        let repo = ProductRepository::new().await.unwrap();
+        let repo = Repository::new().await.unwrap();
+        let product_repository = ProductRepository::new(repo.get_connection());
 
-        let product_id = repo.create_product(new_product).await.unwrap();
-        let product_created = repo.get_product_by_id(product_id as i32).await.unwrap();
+        let product_id = product_repository.create_product(new_product).await.unwrap();
+        let product_created = product_repository.get_product_by_id(product_id as i32).await.unwrap();
 
         (StatusCode::OK, Json(product_created))
     }
